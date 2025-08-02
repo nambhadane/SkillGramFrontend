@@ -1,43 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillShowCase</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
+  <style>
+    @layer base {
+      @tailwind base;
+      @tailwind components;
+      @tailwind utilities;
+    }
+    .animate-pulse-slow {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+  </style>
+  <script>
+    const { useState } = React;
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    function Login() {
+      const [isLogin, setIsLogin] = useState(true);
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [fullName, setFullName] = useState('');
+      const [bio, setBio] = useState('');
+      const [skills, setSkills] = useState('');
+      const [error, setError] = useState(null);
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(null);
+        try {
+          if (isLogin) {
+            const response = await axios.post('http://localhost:8082/api/users/authenticate', {
+              email,
+              password,
+            }, { headers: { 'Content-Type': 'application/json' } });
+            localStorage.setItem('token', response.data.token);
+            window.location.href = '/dashboard';
+          } else {
+            const response = await axios.post('http://localhost:8082/api/users/register', {
+              email,
+              password,
+              fullName,
+              bio,
+              skills,
+            }, { headers: { 'Content-Type': 'application/json' } });
+            alert(response.data);
+            setIsLogin(true);
+            setEmail('');
+            setPassword('');
+            setFullName('');
+            setBio('');
+            setSkills('');
+          }
+        } catch (err) {
+          setError(err.response?.data || (isLogin ? 'Login failed' : 'Registration failed'));
+        }
+      };
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700">
+          <div className="bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex justify-center mb-6">
+              <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-pulse-slow">
+                <span className="text-3xl font-bold text-white">SSC</span>
+              </div>
+            </div>
+            <h1 className="text-4xl font-extrabold text-center mb-6 text-gray-900">
+              {isLogin ? 'Welcome Back' : 'Create Your Account'}
+            </h1>
+            {/* Toggle Buttons - Always visible for switching */}
+            <div className="flex justify-center mb-6 space-x-4">
+              <button
+                type="button"
+                onClick={() => setIsLogin(true)}
+                className={`px-6 py-2 rounded-lg ${isLogin ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'} hover:bg-indigo-700 transition duration-200 font-semibold`}
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsLogin(false)}
+                className={`px-6 py-2 rounded-lg ${!isLogin ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'} hover:bg-indigo-700 transition duration-200 font-semibold`}
+              >
+                Register
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {isLogin ? (
+                <>
+                  <div>
+                    <label htmlFor="login-email" className="block text-sm font-semibold text-gray-700">Email</label>
+                    <input
+                      id="login-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your.email@example.com"
+                      required
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="login-password" className="block text-sm font-semibold text-gray-700">Password</label>
+                    <input
+                      id="login-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-bold"
+                  >
+                    Sign In
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label htmlFor="reg-fullName" className="block text-sm font-semibold text-gray-700">Full Name</label>
+                    <input
+                      id="reg-fullName"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="John Doe"
+                      required
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="reg-email" className="block text-sm font-semibold text-gray-700">Email</label>
+                    <input
+                      id="reg-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your.email@example.com"
+                      required
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="reg-password" className="block text-sm font-semibold text-gray-700">Password</label>
+                    <input
+                      id="reg-password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="reg-bio" className="block text-sm font-semibold text-gray-700">Bio</label>
+                    <textarea
+                      id="reg-bio"
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="Tell us about yourself"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="reg-skills" className="block text-sm font-semibold text-gray-700">Skills</label>
+                    <input
+                      id="reg-skills"
+                      type="text"
+                      value={skills}
+                      onChange={(e) => setSkills(e.target.value)}
+                      placeholder="e.g., Java, Spring, React"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-bold"
+                  >
+                    Register
+                  </button>
+                </>
+              )}
+              {error && <p className="text-red-500 text-center font-medium">{error}</p>}
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<Login />);
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+</body>
 </html>
